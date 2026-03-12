@@ -1,9 +1,12 @@
-import Map from "react-map-gl/mapbox";
+import {Map, NavigationControl} from "react-map-gl/mapbox";
+import { useRef } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function MapPreview() {
+  const mapRef = useRef(null);
+
   return (
     <div
       style={{
@@ -14,7 +17,7 @@ export default function MapPreview() {
         pointerEvents: "none", // 🔥 Disable interaction in preview
       }}
     >
-
+      
       <Map
         ref={mapRef}
         mapboxAccessToken={MAPBOX_TOKEN}

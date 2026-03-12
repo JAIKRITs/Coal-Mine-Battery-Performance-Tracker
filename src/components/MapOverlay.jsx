@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import Map, { NavigationControl } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-console.log("MapOverlay mounted");
+// console.log("MapOverlay mounted");
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-console.log("HIIIIIIIIIIIIIIIIIIIIIIII", import.meta.env.VITE_MAPBOX_TOKEN);
+// console.log("HIIIIIIIIIIIIIIIIIIIIIIII", import.meta.env.VITE_MAPBOX_TOKEN);
 
 export default function MapOverlay() {
   const [visible, setVisible] = useState(false);
@@ -54,7 +54,7 @@ export default function MapOverlay() {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 9999,
+        zIndex: 10001,
         backdropFilter: "blur(12px)",
         background: "rgba(0,0,0,0.6)",
         transition: "all 0.4s ease",

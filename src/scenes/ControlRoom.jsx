@@ -10,16 +10,33 @@ import TextValue3D from "../components/TextValue3D";
 import { Html } from "@react-three/drei";
 import MapPreview from "../components/MapPreview";
 
+// 3D Chart Components
+// import HumidityChart3D from "../components/3DCharts/HumidityChart3D";
+// import HumidityTemperatureChart3D from "../components/3DCharts/HumidityTemperatureChart3D";
+// import TemperatureHumidityRelation3D from "../components/3DCharts/TemperatureHumidityRelation3D";
+// import VoltageTemperatureChart3D from "../components/3DCharts/VoltageTemperatureChart3D";
+// import GaugeChart3D from "../components/3DCharts/GaugeChart3D";
+
+// Data Hook
+// import { useChartData } from "../hooks/useChartData";
+
 export default function ControlRoom({ activePanelRef }) {
   const [activePanel, setActivePanel] = useState(null);
+  // const chartData = useChartData(3000); // Updates every 3 seconds
+
+  // useEffect(() => {
+  //   if (activePanel === "map") {
+  //     window.dispatchEvent(new Event("open-map"));
+  //   } else {
+  //     window.dispatchEvent(new Event("close-map"));
+  //   }
+  // }, [activePanel]);
 
   useEffect(() => {
-    if (activePanel === "map") {
-      window.dispatchEvent(new Event("open-map"));
-    } else {
-      window.dispatchEvent(new Event("close-map"));
-    }
-  }, [activePanel]);
+  if (activePanel === "map") {
+    window.dispatchEvent(new Event("open-map"));
+  }
+}, [activePanel]);
 
   useEffect(() => {
     const closeMap = () => {
@@ -117,7 +134,9 @@ export default function ControlRoom({ activePanelRef }) {
           <Panel3D
             title="Relation between temperature and humidity"
             isActive={activePanel === "tempHum"}
-          />
+          >
+            {/* <TemperatureHumidityRelation3D data={chartData.data} /> */}
+          </Panel3D>
         </group>
       </Interactive>
 
@@ -146,7 +165,9 @@ export default function ControlRoom({ activePanelRef }) {
           <Panel3D
             title="temperature-humidity"
             isActive={activePanel === "tempHumidityChart"}
-          />
+          >
+            {/* <HumidityTemperatureChart3D data={chartData.data} /> */}
+          </Panel3D>
         </group>
       </Interactive>
 
@@ -168,7 +189,7 @@ export default function ControlRoom({ activePanelRef }) {
             title="Humidity Monitoring"
             isActive={activePanel === "humidity"}
           >
-            <TextValue3D label="Humidity" value={0} position={[0, 0.1, 0]} />
+            {/* <HumidityChart3D humidity={chartData.humidity} data={chartData.data} /> */}
           </Panel3D>
         </group>
       </Interactive>
@@ -194,10 +215,10 @@ export default function ControlRoom({ activePanelRef }) {
             {activePanel !== "map" && (
               <Html
                 transform
-                position={[0, -0.05, 0.05]}
+                position={[0, 0, 0.05]}
                 style={{
-                  width: "260px",
-                  height: "150px",
+                  width: "360px",
+                  height: "180px",
                 }}
                 distanceFactor={1.5}
                 pointerEvents="none"
@@ -227,8 +248,7 @@ export default function ControlRoom({ activePanelRef }) {
             title="Voltage-Temperature"
             isActive={activePanel === "voltage"}
           >
-            <TextValue3D label="Voltage" value={0} position={[0, 0.1, 0]} />
-            <TextValue3D label="Temp" value={0} position={[0, -0.1, 0]} />
+            {/* <VoltageTemperatureChart3D data={chartData.data} /> */}
           </Panel3D>
         </group>
       </Interactive>
@@ -251,8 +271,11 @@ export default function ControlRoom({ activePanelRef }) {
             title="Voltage Monitoring and Temperature"
             isActive={activePanel === "bottom"}
           >
-            <TextValue3D label="V1" value={0} position={[-0.5, 0, 0]} />
-            <TextValue3D label="V2" value={0.02} position={[0.5, 0, 0]} />
+            {/* <GaugeChart3D 
+              humidity={chartData.humidity} 
+              temperature={chartData.temperature}
+              voltage={chartData.voltage}
+            /> */}
           </Panel3D>
         </group>
       </Interactive>

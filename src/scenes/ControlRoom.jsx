@@ -11,18 +11,18 @@ import { Html } from "@react-three/drei";
 import MapPreview from "../components/MapPreview";
 
 // 3D Chart Components
-// import HumidityChart3D from "../components/3DCharts/HumidityChart3D";
-// import HumidityTemperatureChart3D from "../components/3DCharts/HumidityTemperatureChart3D";
-// import TemperatureHumidityRelation3D from "../components/3DCharts/TemperatureHumidityRelation3D";
-// import VoltageTemperatureChart3D from "../components/3DCharts/VoltageTemperatureChart3D";
-// import GaugeChart3D from "../components/3DCharts/GaugeChart3D";
+import HumidityChart3D from "../components/3DCharts/HumidityChart3D";
+import HumidityTemperatureChart3D from "../components/3DCharts/HumidityTemperatureChart3D";
+import TemperatureHumidityRelation3D from "../components/3DCharts/TemperatureHumidityRelation3D";
+import VoltageTemperatureChart3D from "../components/3DCharts/VoltageTemperatureChart3D";
+import GaugeChart3D from "../components/3DCharts/GaugeChart3D";
 
 // Data Hook
-// import { useChartData } from "../hooks/useChartData";
+import { useChartData } from "../hooks/useChartData";
 
 export default function ControlRoom({ activePanelRef }) {
   const [activePanel, setActivePanel] = useState(null);
-  // const chartData = useChartData(3000); // Updates every 3 seconds
+  const chartData = useChartData(3000); // Updates every 3 seconds
 
   // useEffect(() => {
   //   if (activePanel === "map") {
@@ -77,7 +77,7 @@ export default function ControlRoom({ activePanelRef }) {
     bottom: baseZ.middle,
   };
 
-  // Smooth animation + active panel tracking
+  // Active panel tracking (no movement animation)
   useFrame(() => {
     let foundActive = false;
 
@@ -85,22 +85,8 @@ export default function ControlRoom({ activePanelRef }) {
       if (!ref.current) return;
 
       const isActive = activePanel === key;
-      const targetZ = isActive ? baseZ.front : defaultZ[key];
-      const targetScale = isActive ? 1.05 : 1;
 
-      // Smooth depth animation
-      ref.current.position.z +=
-        (targetZ - ref.current.position.z) * 0.08;
-
-      // Smooth scale animation
-      ref.current.scale.x +=
-        (targetScale - ref.current.scale.x) * 0.08;
-      ref.current.scale.y +=
-        (targetScale - ref.current.scale.y) * 0.08;
-      ref.current.scale.z +=
-        (targetScale - ref.current.scale.z) * 0.08;
-
-      // Track active panel for camera focus
+      // Track active panel for camera focus (without moving panels)
       if (isActive && activePanelRef) {
         activePanelRef.current = ref.current;
         foundActive = true;
@@ -110,7 +96,6 @@ export default function ControlRoom({ activePanelRef }) {
     // Clear active ref if nothing selected
     if (!foundActive && activePanelRef) {
       activePanelRef.current = null;
-      // window.dispatchEvent(new Event("close-map")); // ✅ ensure map closes
     }
   });
 
@@ -132,10 +117,10 @@ export default function ControlRoom({ activePanelRef }) {
           }}
         >
           <Panel3D
-            title="Relation between temperature and humidity"
+            // title="Relation between temperature and humidity"
             isActive={activePanel === "tempHum"}
           >
-            {/* <TemperatureHumidityRelation3D data={chartData.data} /> */}
+            <TemperatureHumidityRelation3D data={chartData.data} />
           </Panel3D>
         </group>
       </Interactive>
@@ -163,10 +148,10 @@ export default function ControlRoom({ activePanelRef }) {
           }}
         >
           <Panel3D
-            title="temperature-humidity"
+            // title="temperature-humidity"
             isActive={activePanel === "tempHumidityChart"}
           >
-            {/* <HumidityTemperatureChart3D data={chartData.data} /> */}
+            <HumidityTemperatureChart3D data={chartData.data} />
           </Panel3D>
         </group>
       </Interactive>
@@ -186,10 +171,10 @@ export default function ControlRoom({ activePanelRef }) {
           }}
         >
           <Panel3D
-            title="Humidity Monitoring"
+            // title="Humidity Monitoring"
             isActive={activePanel === "humidity"}
           >
-            {/* <HumidityChart3D humidity={chartData.humidity} data={chartData.data} /> */}
+            <HumidityChart3D humidity={chartData.humidity} data={chartData.data} />
           </Panel3D>
         </group>
       </Interactive>
@@ -221,7 +206,8 @@ export default function ControlRoom({ activePanelRef }) {
                   height: "180px",
                 }}
                 distanceFactor={1.5}
-                pointerEvents="none"
+                pointerEvents="auto"
+                zIndexRange={[50, 0]}
               >
                 <MapPreview />
               </Html>
@@ -245,10 +231,10 @@ export default function ControlRoom({ activePanelRef }) {
           }}
         >
           <Panel3D
-            title="Voltage-Temperature"
+            // title="Voltage-Temperature"
             isActive={activePanel === "voltage"}
           >
-            {/* <VoltageTemperatureChart3D data={chartData.data} /> */}
+            <VoltageTemperatureChart3D data={chartData.data} />
           </Panel3D>
         </group>
       </Interactive>
@@ -268,14 +254,14 @@ export default function ControlRoom({ activePanelRef }) {
           }}
         >
           <Panel3D
-            title="Voltage Monitoring and Temperature"
+            // title="Voltage Monitoring and Temperature"
             isActive={activePanel === "bottom"}
           >
-            {/* <GaugeChart3D 
+            <GaugeChart3D 
               humidity={chartData.humidity} 
               temperature={chartData.temperature}
               voltage={chartData.voltage}
-            /> */}
+            />
           </Panel3D>
         </group>
       </Interactive>

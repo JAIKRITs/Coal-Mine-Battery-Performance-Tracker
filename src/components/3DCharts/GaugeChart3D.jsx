@@ -1,149 +1,143 @@
-// /**
-//  * 3D Gauge Chart - Three circular gauges for Humidity, Temperature, and Voltage
-//  */
+/**
+ * 3D Gauge Chart - SVG-based gauge indicators for Humidity, Temperature, and Voltage
+ * Displays three circular progress gauges with real-time mock data
+ */
 
-// import { useRef, useEffect } from 'react';
-// import { useFrame } from '@react-three/fiber';
-// import { Html } from '@react-three/drei';
-// import gsap from 'gsap';
+import { Html } from '@react-three/drei';
 
-// const Gauge = ({ value, label, max, color, position }) => {
-//   const groupRef = useRef();
-//   const valueRef = useRef({ current: 0 });
+const Gauge = ({ value, label, max, color }) => {
+  const percentage = (value / max) * 100;
+  const circumference = 2 * Math.PI * 35;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-//   useEffect(() => {
-//     gsap.to(valueRef.current, {
-//       current: value,
-//       duration: 1.5,
-//       ease: 'power2.out',
-//     });
-//   }, [value]);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ position: 'relative', width: '96px', height: '96px' }}>
+        <svg style={{ transform: 'rotate(-90deg)', width: '96px', height: '96px' }}>
+          {/* Background circle */}
+          <circle
+            cx="48"
+            cy="48"
+            r="35"
+            stroke="#404040"
+            strokeWidth="6"
+            fill="none"
+          />
+          {/* Progress circle */}
+          <circle
+            cx="48"
+            cy="48"
+            r="35"
+            stroke={color}
+            strokeWidth="6"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dashoffset 1.5s ease-out' }}
+          />
+        </svg>
+        {/* Center value */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: '#ffffff',
+              textShadow: `0 0 10px ${color}`,
+            }}
+          >
+            {value.toFixed(1)}
+          </span>
+        </div>
+      </div>
+      {/* Label */}
+      <span
+        style={{
+          marginTop: '4px',
+          fontSize: '12px',
+          color: '#94a3b8',
+          textTransform: 'capitalize',
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+};
 
-//   const percentage = (value / max) * 100;
+const GaugeChart3D = ({ humidity = 0, temperature = 0, voltage = 0 }) => {
+  return (
+    <group>
+      <Html
+        transform
+        position={[0, 0.1, -0.04]}
+        scale={1}
+        distanceFactor={1.5}
+        pointerEvents="none"
+        zIndexRange={[50, 0]}
+      >
+        <div
+          style={{
+            width: '360px',
+            height: '190px',
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
+            border: '2px solid rgba(65, 105, 225, 0.3)',
+            borderRadius: '12px',
+            padding: '15px',
+            boxShadow: '0 0 40px rgba(34, 197, 94, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            color: 'white',
+            fontFamily: 'sans-serif',
+            cursor: 'pointer',
+          }}
+        >
+          {/* Title */}
+          <h2 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#94a3b8' }}>
+            Voltage Monitoring and Temperature
+          </h2>
 
-//   return (
-//     <group ref={groupRef} position={position}>
-//       {/* Gauge background circle */}
-//       <mesh>
-//         <ringGeometry args={[0.6, 0.8, 64]} />
-//         <meshStandardMaterial
-//           color="#1e293b"
-//           metalness={0.2}
-//           roughness={0.8}
-//         />
-//       </mesh>
+          {/* Gauges Container */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              alignItems: 'center',
+              flex: 1,
+            }}
+          >
+            <Gauge
+              value={humidity}
+              label="Humidity"
+              max={100}
+              color="#22c55e"
+            />
+            <Gauge
+              value={temperature}
+              label="Temperature"
+              max={50}
+              color="#f59e0b"
+            />
+            <Gauge
+              value={voltage}
+              label="Voltage"
+              max={15}
+              color="#ef4444"
+            />
+          </div>
+        </div>
+      </Html>
+    </group>
+  );
+};
 
-//       {/* Gauge progress circle */}
-//       <mesh position={[0, 0, 0.01]}>
-//         <ringGeometry
-//           args={[0.6, 0.8, 64, 1, 0, (percentage / 100) * Math.PI * 2]}
-//         />
-//         <meshStandardMaterial
-//           color={color}
-//           metalness={0.4}
-//           roughness={0.6}
-//           emissive={color}
-//           emissiveIntensity={0.3}
-//         />
-//       </mesh>
-
-//       {/* Center circle */}
-//       <mesh position={[0, 0, 0.02]}>
-//         <circleGeometry args={[0.55, 32]} />
-//         <meshStandardMaterial
-//           color="#0f172a"
-//           metalness={0.3}
-//           roughness={0.7}
-//         />
-//       </mesh>
-
-//       {/* HTML Label - Value inside gauge */}
-//       <Html position={[0, 0, 0.1]} scale={0.01} center>
-//         <div
-//           style={{
-//             textAlign: 'center',
-//             fontSize: '32px',
-//             fontWeight: 'bold',
-//             color: color,
-//             textShadow: `0 0 10px ${color}`,
-//             whiteSpace: 'nowrap',
-//           }}
-//         >
-//           {valueRef.current.current.toFixed(1)}
-//         </div>
-//       </Html>
-
-//       {/* HTML Label - Label below gauge */}
-//       <Html position={[0, -1, 0.1]} scale={0.01} center>
-//         <div
-//           style={{
-//             textAlign: 'center',
-//             fontSize: '14px',
-//             color: '#94a3b8',
-//             textTransform: 'capitalize',
-//             whiteSpace: 'nowrap',
-//           }}
-//         >
-//           {label}
-//         </div>
-//       </Html>
-//     </group>
-//   );
-// };
-
-// const GaugeChart3D = ({ humidity = 0, temperature = 0, voltage = 0 }) => {
-//   const groupRef = useRef();
-
-//   useFrame((state) => {
-//     if (groupRef.current) {
-//       groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.15;
-//       groupRef.current.rotation.x = Math.cos(state.clock.elapsedTime * 0.15) * 0.08;
-//     }
-//   });
-
-//   return (
-//     <group ref={groupRef}>
-//       {/* Title Label */}
-//       <Html position={[0, 1.5, 0]} scale={0.015} center>
-//         <div
-//           style={{
-//             fontSize: '20px',
-//             fontWeight: '600',
-//             color: '#94a3b8',
-//             textAlign: 'center',
-//             whiteSpace: 'nowrap',
-//           }}
-//         >
-//           Voltage Monitoring and Temperature
-//         </div>
-//       </Html>
-
-//       {/* Three Gauges */}
-//       <group position={[0, 0, 0]}>
-//         <Gauge 
-//           value={humidity} 
-//           label="Humidity" 
-//           max={100} 
-//           color="#22c55e" 
-//           position={[-0.8, -0.2, 0]} 
-//         />
-//         <Gauge 
-//           value={temperature} 
-//           label="Temperature" 
-//           max={50} 
-//           color="#f59e0b" 
-//           position={[0, -0.2, 0]} 
-//         />
-//         <Gauge 
-//           value={voltage} 
-//           label="Voltage" 
-//           max={15} 
-//           color="#ef4444" 
-//           position={[0.8, -0.2, 0]} 
-//         />
-//       </group>
-//     </group>
-//   );
-// };
-
-// export default GaugeChart3D;
+export default GaugeChart3D;

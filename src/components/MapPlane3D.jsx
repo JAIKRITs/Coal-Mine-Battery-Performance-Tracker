@@ -1,8 +1,11 @@
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
+import { getStaticMapUrl } from "../utils/mapConfig";
 
 export default function MapPlane3D({ position }) {
-  const texture = useLoader(TextureLoader, "/map-placeholder.png");
+  const textureUrl =
+    getStaticMapUrl({ width: 1024, height: 576 }) || "/map-placeholder.png";
+  const texture = useLoader(TextureLoader, textureUrl);
 
   return (
     <group position={position} renderOrder={0}>
@@ -12,7 +15,7 @@ export default function MapPlane3D({ position }) {
           map={texture}
           transparent
           opacity={0.9}
-          depthTest={false}   // 🔴 KEY LINE
+          depthTest={false}
           depthWrite={false}
         />
       </mesh>

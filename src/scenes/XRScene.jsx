@@ -1,11 +1,13 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { XR, VRButton } from "@react-three/xr";
 import { OrbitControls, Environment } from "@react-three/drei";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import * as THREE from "three";
 import MapOverlay from "../components/MapOverlay.jsx";
 
 import ControlRoom from "./ControlRoom";
+import SceneControls from "../components/SceneControls";
+
 
 /* ---------------- CAMERA RIG (SIMPLE & STABLE) ---------------- */
 function CameraRig({ activePanelRef }) {
@@ -34,6 +36,7 @@ function CameraRig({ activePanelRef }) {
 /* ---------------- SCENE ---------------- */
 export default function XRScene() {
   const activePanelRef = useRef(null);
+  const [environmentFile, setEnvironmentFile] = useState("rogland_clear_night_4k.exr");
 
   return (
     <>
@@ -65,8 +68,13 @@ export default function XRScene() {
         {/* previouosly #ofofof */}
 
         {/* Background from .exr in /public */}
-        <Environment
+        {/* <Environment
           files="rogland_clear_night_4k.exr"
+          background
+        /> */}
+
+        <Environment
+          files={environmentFile}
           background
         />
 
@@ -96,6 +104,8 @@ export default function XRScene() {
         </XR>
 
       </Canvas>
+
+      <SceneControls setEnvironmentFile={setEnvironmentFile} />
 
       <MapOverlay />
     </>

@@ -1,11 +1,12 @@
-import { Interactive } from "@react-three/xr";
-import { useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 
 import Panel3D from "../components/Panel3D";
 import MapPreview from "../components/MapPreview";
 import ExperienceGuide3D from "../components/ExperienceGuide3D";
+import PanelMoveGuide3D from "../components/PanelMoveGuide3D";
+import MovablePanelGroup from "../components/MovablePanelGroup";
 
 import HumidityChart3D from "../components/3DCharts/HumidityChart3D";
 import HumidityTemperatureChart3D from "../components/3DCharts/HumidityTemperatureChart3D";
@@ -14,43 +15,77 @@ import VoltageTemperatureChart3D from "../components/3DCharts/VoltageTemperature
 import GaugeChart3D from "../components/3DCharts/GaugeChart3D";
 
 import { useChartData } from "../hooks/useChartData";
+import { CONTROL_ROOM_PANEL_LAYOUT } from "../utils/panelLayout";
 
 export default function ControlRoom({
   activePanelRef,
   onActivePanelChange,
   experiencePOV = false,
+  moveModeActive = false,
+  moveSessionId = 0,
   isPresenting = false,
   onToggleExperience,
+  onToggleMoveMode,
+  onPanelDragStateChange,
   experienceEyeRef,
   experienceLookTargetRef,
 }) {
   const [activePanel, setActivePanel] = useState(null);
   const chartData = useChartData(3000);
 
-  const panels = {
-    tempHum: useRef(),
-    tempHumidityChart: useRef(),
-    humidity: useRef(),
-    map: useRef(),
-    voltage: useRef(),
-    bottom: useRef(),
+  const panelRefs = {
+    tempHum: useRef(null),
+    tempHumidityChart: useRef(null),
+    humidity: useRef(null),
+    map: useRef(null),
+    voltage: useRef(null),
+    bottom: useRef(null),
   };
 
-  const baseZ = {
-    back: -0.2,
-    middle: 0,
-  };
+  const interactionsLocked = experiencePOV || moveModeActive;
+  const visibleActivePanel = interactionsLocked ? null : activePanel;
+  const moveGuideDisabled = isPresenting || experiencePOV;
+  const moveGuideDisabledSubtitle = isPresenting ? "Desktop only" : "Exit POV first";
 
-  const defaultZ = {
-    tempHum: baseZ.back,
-    tempHumidityChart: baseZ.back,
-    humidity: baseZ.middle,
-    map: baseZ.middle,
-    voltage: baseZ.middle,
-    bottom: baseZ.middle,
-  };
-
-  const interactionsLocked = experiencePOV;
+  const panelContent = useMemo(
+    () => ({
+      tempHum: <TemperatureHumidityRelation3D data={chartData.data} />,
+      tempHumidityChart: <HumidityTemperatureChart3D data={chartData.data} />,
+      humidity: <HumidityChart3D humidity={chartData.humidity} data={chartData.data} />,
+      map: visibleActivePanel !== "map" && (
+        <Html
+          transform
+          position={[0, 0, 0.05]}
+          style={{
+            width: "360px",
+            height: "180px",
+          }}
+          distanceFactor={1.5}
+          pointerEvents={experiencePOV || moveModeActive ? "none" : "auto"}
+          zIndexRange={[50, 0]}
+        >
+          <MapPreview />
+        </Html>
+      ),
+      voltage: <VoltageTemperatureChart3D data={chartData.data} />,
+      bottom: (
+        <GaugeChart3D
+          humidity={chartData.humidity}
+          temperature={chartData.temperature}
+          voltage={chartData.voltage}
+        />
+      ),
+    }),
+    [
+      chartData.data,
+      chartData.humidity,
+      chartData.temperature,
+      chartData.voltage,
+      experiencePOV,
+      moveModeActive,
+      visibleActivePanel,
+    ]
+  );
 
   const togglePanel = (key) => {
     if (interactionsLocked) {
@@ -61,10 +96,10 @@ export default function ControlRoom({
   };
 
   useEffect(() => {
-    if (activePanel === "map" && !experiencePOV) {
+    if (visibleActivePanel === "map" && !experiencePOV && !moveModeActive) {
       window.dispatchEvent(new Event("open-map"));
     }
-  }, [activePanel, experiencePOV]);
+  }, [visibleActivePanel, experiencePOV, moveModeActive]);
 
   useEffect(() => {
     const closeMap = () => {
@@ -79,20 +114,26 @@ export default function ControlRoom({
   }, []);
 
   useEffect(() => {
-    onActivePanelChange?.(activePanel);
-  }, [activePanel, onActivePanelChange]);
+    onActivePanelChange?.(visibleActivePanel);
+  }, [visibleActivePanel, onActivePanelChange]);
 
   useEffect(() => {
-    if (!experiencePOV) {
+    if (!experiencePOV && !moveModeActive) {
       return;
     }
 
-    setActivePanel(null);
+    onPanelDragStateChange?.(false);
     window.dispatchEvent(new Event("close-map"));
-  }, [experiencePOV]);
+
+    const timeoutId = window.setTimeout(() => {
+      setActivePanel(null);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [experiencePOV, moveModeActive, onPanelDragStateChange]);
 
   useFrame(() => {
-    if (experiencePOV) {
+    if (experiencePOV || moveModeActive) {
       if (activePanelRef) {
         activePanelRef.current = null;
       }
@@ -101,10 +142,12 @@ export default function ControlRoom({
 
     let foundActive = false;
 
-    Object.entries(panels).forEach(([key, ref]) => {
-      if (!ref.current) return;
+    Object.entries(panelRefs).forEach(([key, ref]) => {
+      if (!ref.current) {
+        return;
+      }
 
-      if (activePanel === key && activePanelRef) {
+      if (visibleActivePanel === key && activePanelRef) {
         activePanelRef.current = ref.current;
         foundActive = true;
       }
@@ -119,119 +162,35 @@ export default function ControlRoom({
     <group onClick={() => !interactionsLocked && setActivePanel(null)}>
       <ExperienceGuide3D
         isActive={experiencePOV}
-        disabled={isPresenting}
+        disabled={isPresenting || moveModeActive}
         onToggle={onToggleExperience}
         eyeAnchorRef={experienceEyeRef}
         lookTargetRef={experienceLookTargetRef}
       />
 
-      <Interactive onSelect={() => togglePanel("tempHum")}>
-        <group
-          ref={panels.tempHum}
-          position={[-1.6, 0.8, defaultZ.tempHum]}
-          onClick={(event) => {
-            event.stopPropagation();
-            togglePanel("tempHum");
-          }}
-        >
-          <Panel3D isActive={activePanel === "tempHum"}>
-            <TemperatureHumidityRelation3D data={chartData.data} />
-          </Panel3D>
-        </group>
-      </Interactive>
+      <PanelMoveGuide3D
+        isActive={moveModeActive}
+        disabled={moveGuideDisabled}
+        disabledSubtitle={moveGuideDisabledSubtitle}
+        onToggle={onToggleMoveMode}
+      />
 
-      <Interactive onSelect={() => togglePanel("tempHumidityChart")}>
-        <group
-          ref={panels.tempHumidityChart}
-          position={[1.6, 0.8, defaultZ.tempHumidityChart]}
-          onClick={(event) => {
-            event.stopPropagation();
-            togglePanel("tempHumidityChart");
-          }}
+      {CONTROL_ROOM_PANEL_LAYOUT.map((panel) => (
+        <MovablePanelGroup
+          key={`${panel.key}-${moveSessionId}`}
+          ref={panelRefs[panel.key]}
+          panelKey={panel.key}
+          defaultPosition={panel.defaultPosition}
+          moveModeActive={moveModeActive}
+          movable={panel.movable}
+          onTogglePanel={togglePanel}
+          onDragStateChange={onPanelDragStateChange}
         >
-          <Panel3D isActive={activePanel === "tempHumidityChart"}>
-            <HumidityTemperatureChart3D data={chartData.data} />
+          <Panel3D title={panel.title} isActive={visibleActivePanel === panel.key}>
+            {panelContent[panel.key]}
           </Panel3D>
-        </group>
-      </Interactive>
-
-      <Interactive onSelect={() => togglePanel("humidity")}>
-        <group
-          ref={panels.humidity}
-          position={[-1.6, 0, defaultZ.humidity]}
-          onClick={(event) => {
-            event.stopPropagation();
-            togglePanel("humidity");
-          }}
-        >
-          <Panel3D isActive={activePanel === "humidity"}>
-            <HumidityChart3D humidity={chartData.humidity} data={chartData.data} />
-          </Panel3D>
-        </group>
-      </Interactive>
-
-      <Interactive onSelect={() => togglePanel("map")}>
-        <group
-          ref={panels.map}
-          position={[0, 0, defaultZ.map]}
-          onClick={(event) => {
-            event.stopPropagation();
-            togglePanel("map");
-          }}
-        >
-          <Panel3D title="Location Tracing" isActive={activePanel === "map"}>
-            {activePanel !== "map" && (
-              <Html
-                transform
-                position={[0, 0, 0.05]}
-                style={{
-                  width: "360px",
-                  height: "180px",
-                }}
-                distanceFactor={1.5}
-                pointerEvents={experiencePOV ? "none" : "auto"}
-                zIndexRange={[50, 0]}
-              >
-                <MapPreview />
-              </Html>
-            )}
-          </Panel3D>
-        </group>
-      </Interactive>
-
-      <Interactive onSelect={() => togglePanel("voltage")}>
-        <group
-          ref={panels.voltage}
-          position={[1.6, 0, defaultZ.voltage]}
-          onClick={(event) => {
-            event.stopPropagation();
-            togglePanel("voltage");
-          }}
-        >
-          <Panel3D isActive={activePanel === "voltage"}>
-            <VoltageTemperatureChart3D data={chartData.data} />
-          </Panel3D>
-        </group>
-      </Interactive>
-
-      <Interactive onSelect={() => togglePanel("bottom")}>
-        <group
-          ref={panels.bottom}
-          position={[0, -0.9, defaultZ.bottom]}
-          onClick={(event) => {
-            event.stopPropagation();
-            togglePanel("bottom");
-          }}
-        >
-          <Panel3D isActive={activePanel === "bottom"}>
-            <GaugeChart3D
-              humidity={chartData.humidity}
-              temperature={chartData.temperature}
-              voltage={chartData.voltage}
-            />
-          </Panel3D>
-        </group>
-      </Interactive>
+        </MovablePanelGroup>
+      ))}
     </group>
   );
 }

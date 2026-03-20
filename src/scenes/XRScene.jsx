@@ -1,7 +1,7 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { XR, VRButton, useXR } from "@react-three/xr";
 import { OrbitControls, Environment } from "@react-three/drei";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import MapOverlay from "../components/MapOverlay.jsx";
 
@@ -10,6 +10,19 @@ import SceneControls from "../components/SceneControls";
 
 const DEFAULT_CAMERA_POSITION = new THREE.Vector3(0, 1.2, 4);
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
+const TOP_LEFT_EXIT_BUTTON_STYLE = {
+  position: "fixed",
+  top: 20,
+  left: 20,
+  zIndex: 10000,
+  padding: "10px 14px",
+  borderRadius: "10px",
+  border: "1px solid rgba(255,255,255,0.18)",
+  background: "rgba(15, 23, 42, 0.92)",
+  color: "#fff",
+  cursor: "pointer",
+  fontFamily: "sans-serif",
+};
 
 function XRSessionBridge({ onPresentingChange }) {
   const isPresenting = useXR((state) => state.isPresenting);
@@ -81,18 +94,30 @@ export default function XRScene() {
   const [activePanelKey, setActivePanelKey] = useState(null);
   const [cameraMode, setCameraMode] = useState("default");
   const [isPresenting, setIsPresenting] = useState(false);
+  const [moveModeActive, setMoveModeActive] = useState(false);
+  const [moveSessionId, setMoveSessionId] = useState(0);
+  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
 
-  const isExperiencePOV = cameraMode === "experiencePOV";
-  const isReturningHome = cameraMode === "returnHome";
-  const orbitControlsLocked = isExperiencePOV || isReturningHome;
+  const resolvedCameraMode =
+    cameraMode === "default" && activePanelKey ? "panelFocus" : cameraMode;
+  const isExperiencePOV = resolvedCameraMode === "experiencePOV";
+  const isReturningHome = resolvedCameraMode === "returnHome";
+  const orbitControlsLocked = isExperiencePOV || isReturningHome || isDraggingPanel;
 
-  useEffect(() => {
-    if (isExperiencePOV || isReturningHome) {
+  const handleToggleMoveMode = useCallback(() => {
+    if (isPresenting || isExperiencePOV || isReturningHome) {
       return;
     }
 
-    setCameraMode(activePanelKey ? "panelFocus" : "default");
-  }, [activePanelKey, isExperiencePOV, isReturningHome]);
+    setMoveModeActive((currentMode) => {
+      if (currentMode) {
+        return false;
+      }
+
+      setMoveSessionId((currentSession) => currentSession + 1);
+      return true;
+    });
+  }, [isExperiencePOV, isPresenting, isReturningHome]);
 
   useEffect(() => {
     if (isPresenting) {
@@ -111,7 +136,16 @@ export default function XRScene() {
         return;
       }
 
+      if ((event.key === "m" || event.key === "M") && !moveModeActive && !isExperiencePOV && !isReturningHome) {
+        handleToggleMoveMode();
+        return;
+      }
+
       if ((event.key === "e" || event.key === "E") && !isExperiencePOV && !isReturningHome) {
+        if (moveModeActive) {
+          return;
+        }
+
         setCameraMode("experiencePOV");
         return;
       }
@@ -119,13 +153,18 @@ export default function XRScene() {
       if (event.key === "Escape") {
         if (isExperiencePOV) {
           setCameraMode("returnHome");
+          return;
+        }
+
+        if (moveModeActive) {
+          setMoveModeActive(false);
         }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isExperiencePOV, isPresenting, isReturningHome]);
+  }, [handleToggleMoveMode, isExperiencePOV, isPresenting, isReturningHome, moveModeActive]);
 
   useEffect(() => {
     if (!isExperiencePOV) {
@@ -134,12 +173,6 @@ export default function XRScene() {
 
     window.dispatchEvent(new Event("close-map"));
   }, [isExperiencePOV]);
-
-  useEffect(() => {
-    if (isPresenting && isExperiencePOV) {
-      setCameraMode("returnHome");
-    }
-  }, [isPresenting, isExperiencePOV]);
 
   useEffect(() => {
     if (!isReturningHome) {
@@ -157,8 +190,12 @@ export default function XRScene() {
     setCameraMode("returnHome");
   };
 
+  const handleExitMoveMode = () => {
+    setMoveModeActive(false);
+  };
+
   const handleToggleExperience = () => {
-    if (isPresenting) {
+    if (isPresenting || moveModeActive) {
       return;
     }
 
@@ -173,7 +210,7 @@ export default function XRScene() {
 
   return (
     <>
-      <VRButton />
+      {/* <VRButton /> */}
 
       <Canvas
         shadows
@@ -215,11 +252,25 @@ export default function XRScene() {
         <axesHelper args={[3]} />
 
         <XR>
-          <XRSessionBridge onPresentingChange={setIsPresenting} />
+          <XRSessionBridge
+            onPresentingChange={(nextPresenting) => {
+              setIsPresenting(nextPresenting);
+
+              if (!nextPresenting) {
+                return;
+              }
+
+              setCameraMode((currentMode) =>
+                currentMode === "experiencePOV" ? "returnHome" : currentMode
+              );
+              setMoveModeActive(false);
+              setIsDraggingPanel(false);
+            }}
+          />
 
           <CameraRig
             activePanelRef={activePanelRef}
-            cameraMode={cameraMode}
+            cameraMode={resolvedCameraMode}
             controlsRef={controlsRef}
             experienceEyeRef={experienceEyeRef}
             experienceLookTargetRef={experienceLookTargetRef}
@@ -229,8 +280,12 @@ export default function XRScene() {
             activePanelRef={activePanelRef}
             onActivePanelChange={setActivePanelKey}
             experiencePOV={isExperiencePOV}
+            moveModeActive={moveModeActive}
+            moveSessionId={moveSessionId}
             isPresenting={isPresenting}
             onToggleExperience={handleToggleExperience}
+            onToggleMoveMode={handleToggleMoveMode}
+            onPanelDragStateChange={setIsDraggingPanel}
             experienceEyeRef={experienceEyeRef}
             experienceLookTargetRef={experienceLookTargetRef}
           />
@@ -239,22 +294,16 @@ export default function XRScene() {
 
       <SceneControls setEnvironmentFile={setEnvironmentFile} />
 
+      {moveModeActive && !isPresenting && (
+        <button onClick={handleExitMoveMode} style={TOP_LEFT_EXIT_BUTTON_STYLE}>
+          Exit Move Mode
+        </button>
+      )}
+
       {isExperiencePOV && !isPresenting && (
         <button
           onClick={handleExitExperience}
-          style={{
-            position: "fixed",
-            top: 20,
-            left: 20,
-            zIndex: 10000,
-            padding: "10px 14px",
-            borderRadius: "10px",
-            border: "1px solid rgba(255,255,255,0.18)",
-            background: "rgba(15, 23, 42, 0.92)",
-            color: "#fff",
-            cursor: "pointer",
-            fontFamily: "sans-serif",
-          }}
+          style={TOP_LEFT_EXIT_BUTTON_STYLE}
         >
           Exit Experience
         </button>

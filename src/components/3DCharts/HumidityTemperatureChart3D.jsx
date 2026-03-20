@@ -14,11 +14,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import gsap from 'gsap';
 
 const HumidityTemperatureChart3D = ({ data }) => {
-
-    const chartData = (Array.isArray(data) ? data : [])
+  const chartData = (Array.isArray(data) ? data : [])
     .slice(-20)
     .map(d => {
       const humidityVal = typeof d.humidity === 'number' ? d.humidity : parseFloat(d.humidity) || 0;

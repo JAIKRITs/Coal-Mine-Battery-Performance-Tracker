@@ -3,7 +3,7 @@
  * Uses Recharts for chart rendering with Three.js 3D effects
  */
 
-import { useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Html } from '@react-three/drei';
 import {
   LineChart,
@@ -17,15 +17,26 @@ import {
 import gsap from 'gsap';
 
 const HumidityChart3D = ({ humidity, data }) => {
-  const valueRef = useRef({ current: 0 });
+  const displayValueRef = useRef(0);
+  const [displayValue, setDisplayValue] = useState(0);
 
   // Animate value changes with GSAP
   useEffect(() => {
-    gsap.to(valueRef.current, {
+    const animatedValue = { current: displayValueRef.current };
+
+    const tween = gsap.to(animatedValue, {
       current: humidity,
       duration: 1.5,
       ease: 'power2.out',
+      onUpdate: () => {
+        displayValueRef.current = animatedValue.current;
+        setDisplayValue(animatedValue.current);
+      },
     });
+
+    return () => {
+      tween.kill();
+    };
   }, [humidity]);
 
   // Prepare chart data
@@ -79,7 +90,7 @@ const HumidityChart3D = ({ humidity, data }) => {
               textShadow: '0 0 20px rgba(34, 197, 94, 0.5)',
             }}
           >
-            {valueRef.current.current.toFixed(1)}%
+            {displayValue.toFixed(1)}%
           </div>
 
           <div style={{ width: '100%', height: '120px', marginTop: '15px' }}>

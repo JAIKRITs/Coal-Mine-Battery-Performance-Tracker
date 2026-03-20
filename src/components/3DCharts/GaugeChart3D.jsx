@@ -79,7 +79,7 @@ const GaugeChart3D = ({ humidity = 0, temperature = 0, voltage = 0 }) => {
     <group>
       <Html
         transform
-        position={[0, 0.1, -0.04]}
+        position={[0, 0.05, -0.04]}
         scale={1}
         distanceFactor={1.5}
         pointerEvents="none"

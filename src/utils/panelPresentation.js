@@ -1,0 +1,167 @@
+const SHELL_LAYOUTS = {
+  dashboard: {
+    width: 1.6,
+    height: 0.9,
+    depth: 0.08,
+    titlePosition: [0, 0.38, 0.092],
+    titleFontSize: 0.07,
+    titleAnchorX: "center",
+    contentPosition: [0, -0.05, 0.09],
+    hoverTilt: 0.04,
+    bodyOpacity: 1,
+    glassOpacity: 0.22,
+    outlineOpacity: 0.15,
+    titleOpacity: 1,
+    baseColor: "#171c22",
+    edgeColor: "#9fb4ca",
+    activeGlow: "#8fe3ff",
+    hoverGlow: "#4fd1c5",
+    activeEmissiveIntensity: 0.18,
+    hoverEmissiveIntensity: 0.08,
+    shadowOpacity: 0.18,
+  },
+  sliderFocus: {
+    width: 5.2,
+    height: 2.92,
+    depth: 0.055,
+    titlePosition: [-2.16, 1.17, 0.045],
+    titleFontSize: 0.135,
+    titleAnchorX: "left",
+    contentPosition: [0, -0.03, 0.045],
+    hoverTilt: 0,
+    bodyOpacity: 0.84,
+    glassOpacity: 0.28,
+    outlineOpacity: 0.24,
+    titleOpacity: 0.94,
+    baseColor: "#0d131a",
+    edgeColor: "#d9e4ef",
+    activeGlow: "#f8fafc",
+    hoverGlow: "#ffffff",
+    activeEmissiveIntensity: 0.05,
+    hoverEmissiveIntensity: 0,
+    shadowOpacity: 0.22,
+  },
+  sliderHint: {
+    width: 5.2,
+    height: 2.92,
+    depth: 0.042,
+    titlePosition: [-2.08, -1.14, 0.035],
+    titleFontSize: 0.11,
+    titleAnchorX: "left",
+    contentPosition: [0, -0.03, 0.04],
+    hoverTilt: 0,
+    bodyOpacity: 0.2,
+    glassOpacity: 0.08,
+    outlineOpacity: 0.14,
+    titleOpacity: 0.52,
+    baseColor: "#0a1016",
+    edgeColor: "#d8e2ee",
+    activeGlow: "#f8fafc",
+    hoverGlow: "#ffffff",
+    activeEmissiveIntensity: 0,
+    hoverEmissiveIntensity: 0,
+    shadowOpacity: 0.08,
+  },
+};
+
+const CONTENT_LAYOUTS = {
+  dashboard: {
+    width: 360,
+    height: 190,
+    mapHeight: 180,
+    padding: 15,
+    radius: 12,
+    titleSize: 14,
+    subtitleSize: 10,
+    titleSpacing: 8,
+    gap: 12,
+    axisFont: 9,
+    legendFont: 9,
+    statFont: 9,
+    labelSize: 12,
+    metricSize: 56,
+    chartHeight: 120,
+    secondaryWidth: 180,
+    gaugeSize: 96,
+    gaugeStroke: 6,
+    controlSize: 32,
+    controlFontSize: 20,
+    buttonPadding: "8px 12px",
+    innerInset: 12,
+    shadow: "0 16px 40px rgba(0, 0, 0, 0.28)",
+  },
+  sliderFocus: {
+    width: 1180,
+    height: 640,
+    mapHeight: 640,
+    padding: 30,
+    radius: 28,
+    titleSize: 30,
+    subtitleSize: 13,
+    titleSpacing: 18,
+    gap: 24,
+    axisFont: 12,
+    legendFont: 12,
+    statFont: 13,
+    labelSize: 14,
+    metricSize: 112,
+    chartHeight: 250,
+    secondaryWidth: 300,
+    gaugeSize: 178,
+    gaugeStroke: 10,
+    controlSize: 42,
+    controlFontSize: 24,
+    buttonPadding: "10px 16px",
+    innerInset: 20,
+    shadow: "0 30px 90px rgba(0, 0, 0, 0.34)",
+  },
+};
+
+export function getPanelShellLayout(presentation = "dashboard") {
+  return SHELL_LAYOUTS[presentation] ?? SHELL_LAYOUTS.dashboard;
+}
+
+export function getPanelContentLayout(variant = "dashboard") {
+  return CONTENT_LAYOUTS[variant] ?? CONTENT_LAYOUTS.dashboard;
+}
+
+export function getPanelCardStyle(layout) {
+  return {
+    width: `${layout.width}px`,
+    height: `${layout.height}px`,
+    background:
+      "linear-gradient(160deg, rgba(10, 14, 20, 0.86), rgba(22, 30, 41, 0.78))",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
+    borderRadius: `${layout.radius}px`,
+    padding: `${layout.padding}px`,
+    boxShadow: layout.shadow,
+    display: "flex",
+    flexDirection: "column",
+    color: "#f8fafc",
+    fontFamily: "sans-serif",
+    backdropFilter: "blur(18px)",
+    WebkitBackdropFilter: "blur(18px)",
+    overflow: "hidden",
+  };
+}
+
+export function getPanelTooltipStyle(layout) {
+  return {
+    backgroundColor: "rgba(12, 17, 24, 0.96)",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
+    borderRadius: `${Math.max(10, layout.radius * 0.5)}px`,
+    color: "#e2e8f0",
+    fontSize: `${Math.max(10, layout.axisFont)}px`,
+    boxShadow: "0 16px 36px rgba(0, 0, 0, 0.32)",
+  };
+}
+
+export const PANEL_SURFACE_COLORS = {
+  title: "#dbe5f0",
+  subdued: "#90a2b8",
+  grid: "rgba(148, 163, 184, 0.16)",
+  divider: "rgba(148, 163, 184, 0.18)",
+  humidity: "#34d399",
+  temperature: "#f59e0b",
+  voltage: "#fb7185",
+};

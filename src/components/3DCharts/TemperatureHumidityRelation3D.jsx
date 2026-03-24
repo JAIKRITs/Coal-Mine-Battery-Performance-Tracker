@@ -1,139 +1,226 @@
-/**
- * 3D Temperature-Humidity Relation Chart
- * Displays scatter plot with statistics table
- */
-
-import { Html } from '@react-three/drei';
+import { Html } from "@react-three/drei";
 import {
-  ScatterChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
   Scatter,
+  ScatterChart,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts';
-import { calculateStats } from '../../utils/mockChartData';
+} from "recharts";
+import { calculateStats } from "../../utils/mockChartData";
+import {
+  getPanelCardStyle,
+  getPanelContentLayout,
+  getPanelTooltipStyle,
+  PANEL_SURFACE_COLORS,
+} from "../../utils/panelPresentation";
 
-const TemperatureHumidityRelation3D = ({ data }) => {
+const STAT_LABELS = [
+  { key: "max", label: "Max" },
+  { key: "min", label: "Min" },
+  { key: "mean", label: "Mean" },
+];
 
+export default function TemperatureHumidityRelation3D({
+  data,
+  variant = "dashboard",
+}) {
+  const layout = getPanelContentLayout(variant);
   const scatterData = (Array.isArray(data) ? data : [])
-    .map(d => ({
-      temperature: Number(d.temperature) || 0,
-      humidity: Number(d.humidity) || 0,
+    .map((entry) => ({
+      temperature: Number(entry.temperature) || 0,
+      humidity: Number(entry.humidity) || 0,
     }))
-    .filter(d => d.temperature > 0 && d.humidity > 0);
+    .filter((entry) => entry.temperature > 0 && entry.humidity > 0);
 
-  const humidityStats = calculateStats(data, 'humidity');
-  const temperatureStats = calculateStats(data, 'temperature');
+  const humidityStats = calculateStats(data, "humidity");
+  const temperatureStats = calculateStats(data, "temperature");
 
   return (
     <group>
       <Html
         transform
-        position={[0, 0.07, -0.04]}
-        scale={1}
+        position={[0, 0.07, 0.01]}
         distanceFactor={1.5}
         pointerEvents="none"
         zIndexRange={[50, 0]}
       >
-        <div
-          style={{
-            width: '360px',
-            height: '180px',
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
-            border: '2px solid rgba(65, 105, 225, 0.3)',
-            borderRadius: '12px',
-            padding: '15px',
-            boxShadow: '0 0 40px rgba(34, 197, 94, 0.15)',
-            display: 'flex',
-            flexDirection: 'column',
-            color: 'white',
-            fontFamily: 'sans-serif',
-          }}
-        >
-          <h2 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#94a3b8' }}>
+        <div style={getPanelCardStyle(layout)}>
+          <h2
+            style={{
+              margin: `0 0 ${layout.titleSpacing}px 0`,
+              fontSize: `${layout.titleSize}px`,
+              color: PANEL_SURFACE_COLORS.title,
+              fontWeight: 500,
+              letterSpacing: "0.01em",
+            }}
+          >
             Relation between temperature and humidity
           </h2>
 
-          <div style={{ display: 'flex', gap: '12px', flex: 1, minHeight: 0 }}>
-            {/* Chart */}
-            <div style={{ flex: 2, minHeight: 0 }}>
-              {scatterData.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              gap: `${layout.gap}px`,
+              flex: 1,
+              minHeight: 0,
+            }}
+          >
+            <div style={{ flex: 1, minHeight: 0 }}>
+              {scatterData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 5, right: 10, bottom: 20, left: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(100, 116, 139, 0.2)" />
+                  <ScatterChart
+                    margin={{
+                      top: 10,
+                      right: 18,
+                      bottom: layout.axisFont >= 12 ? 26 : 20,
+                      left: layout.axisFont >= 12 ? 14 : 10,
+                    }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={PANEL_SURFACE_COLORS.grid}
+                    />
                     <XAxis
                       type="number"
                       dataKey="temperature"
-                      stroke="#64748b"
-                      tick={{ fill: '#64748b', fontSize: 9 }}
+                      stroke={PANEL_SURFACE_COLORS.subdued}
+                      tick={{
+                        fill: PANEL_SURFACE_COLORS.subdued,
+                        fontSize: layout.axisFont,
+                      }}
                       label={{
-                        value: 'Temperature (°C)',
-                        position: 'bottom',
-                        offset: 0,
-                        fill: '#64748b',
-                        fontSize: 9,
+                        value: "Temperature (deg C)",
+                        position: "bottom",
+                        offset: 6,
+                        fill: PANEL_SURFACE_COLORS.subdued,
+                        fontSize: layout.axisFont,
                       }}
                     />
                     <YAxis
                       type="number"
                       dataKey="humidity"
-                      stroke="#64748b"
-                      tick={{ fill: '#64748b', fontSize: 9 }}
+                      stroke={PANEL_SURFACE_COLORS.subdued}
+                      tick={{
+                        fill: PANEL_SURFACE_COLORS.subdued,
+                        fontSize: layout.axisFont,
+                      }}
                       label={{
-                        value: 'Humidity (%)',
+                        value: "Humidity (%)",
                         angle: -90,
-                        position: 'left',
-                        fill: '#64748b',
-                        fontSize: 9,
+                        position: "left",
+                        fill: PANEL_SURFACE_COLORS.subdued,
+                        fontSize: layout.axisFont,
                       }}
                     />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1e293b',
-                        border: '1px solid #404040',
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        color: '#22c55e',
-                      }}
-                      cursor={{ strokeDasharray: '3 3' }}
+                      contentStyle={getPanelTooltipStyle(layout)}
+                      cursor={{ strokeDasharray: "3 3" }}
                     />
-                    <Scatter name="Humidity" data={scatterData} fill="#22c55e">
+                    <Scatter name="Humidity" data={scatterData} fill={PANEL_SURFACE_COLORS.humidity}>
                       {scatterData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill="#22c55e" />
+                        <Cell
+                          key={`${entry.temperature}-${entry.humidity}-${index}`}
+                          fill={PANEL_SURFACE_COLORS.humidity}
+                        />
                       ))}
                     </Scatter>
                   </ScatterChart>
                 </ResponsiveContainer>
-              )}
+              ) : null}
             </div>
 
-            {/* Stats Table */}
-            <div style={{ width: '180px', flexShrink: 0 }}>
-              <table style={{ width: '100%', fontSize: '9px', color: '#cbd5e1' }}>
+            <div
+              style={{
+                width: `${layout.secondaryWidth}px`,
+                flexShrink: 0,
+                borderRadius: `${Math.max(14, layout.radius * 0.7)}px`,
+                border: `1px solid ${PANEL_SURFACE_COLORS.divider}`,
+                background: "rgba(255, 255, 255, 0.03)",
+                padding: `${Math.max(10, layout.padding * 0.55)}px`,
+              }}
+            >
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: `${layout.statFont}px`,
+                  color: "#d8e2ed",
+                }}
+              >
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #404040' }}>
-                    <th style={{ textAlign: 'left', padding: '4px', color: '#94a3b8' }}>Name</th>
-                    <th style={{ textAlign: 'right', padding: '4px', color: '#94a3b8' }}>Max</th>
-                    <th style={{ textAlign: 'right', padding: '4px', color: '#94a3b8' }}>Min</th>
-                    <th style={{ textAlign: 'right', padding: '4px', color: '#94a3b8' }}>Mean</th>
+                  <tr style={{ borderBottom: `1px solid ${PANEL_SURFACE_COLORS.divider}` }}>
+                    <th
+                      style={{
+                        textAlign: "left",
+                        padding: "0 0 10px 0",
+                        color: PANEL_SURFACE_COLORS.subdued,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Metric
+                    </th>
+                    {STAT_LABELS.map((stat) => (
+                      <th
+                        key={stat.key}
+                        style={{
+                          textAlign: "right",
+                          padding: "0 0 10px 0",
+                          color: PANEL_SURFACE_COLORS.subdued,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {stat.label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  <tr style={{ borderBottom: '1px solid #2d3748', color: '#22c55e' }}>
-                    <td style={{ padding: '4px' }}>humidity</td>
-                    <td style={{ textAlign: 'right', padding: '4px' }}>{humidityStats.max}</td>
-                    <td style={{ textAlign: 'right', padding: '4px' }}>{humidityStats.min}</td>
-                    <td style={{ textAlign: 'right', padding: '4px' }}>{humidityStats.mean}</td>
-                  </tr>
-                  <tr style={{ color: '#f59e0b' }}>
-                    <td style={{ padding: '4px' }}>temperature</td>
-                    <td style={{ textAlign: 'right', padding: '4px' }}>{temperatureStats.max}</td>
-                    <td style={{ textAlign: 'right', padding: '4px' }}>{temperatureStats.min}</td>
-                    <td style={{ textAlign: 'right', padding: '4px' }}>{temperatureStats.mean}</td>
-                  </tr>
+                  {[
+                    {
+                      label: "Humidity",
+                      color: PANEL_SURFACE_COLORS.humidity,
+                      values: humidityStats,
+                    },
+                    {
+                      label: "Temperature",
+                      color: PANEL_SURFACE_COLORS.temperature,
+                      values: temperatureStats,
+                    },
+                  ].map((row, rowIndex) => (
+                    <tr
+                      key={row.label}
+                      style={{
+                        borderBottom:
+                          rowIndex === 0
+                            ? `1px solid ${PANEL_SURFACE_COLORS.divider}`
+                            : "none",
+                      }}
+                    >
+                      <td
+                        style={{
+                          padding: "12px 0",
+                          color: row.color,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {row.label}
+                      </td>
+                      {STAT_LABELS.map((stat) => (
+                        <td
+                          key={stat.key}
+                          style={{
+                            padding: "12px 0",
+                            textAlign: "right",
+                          }}
+                        >
+                          {row.values[stat.key]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -142,6 +229,4 @@ const TemperatureHumidityRelation3D = ({ data }) => {
       </Html>
     </group>
   );
-};
-
-export default TemperatureHumidityRelation3D;
+}

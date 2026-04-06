@@ -1,143 +1,154 @@
-/**
- * 3D Gauge Chart - SVG-based gauge indicators for Humidity, Temperature, and Voltage
- * Displays three circular progress gauges with real-time mock data
- */
+import { Html } from "@react-three/drei";
+import {
+  getPanelCardStyle,
+  getPanelContentLayout,
+  PANEL_SURFACE_COLORS,
+} from "../../utils/panelPresentation";
 
-import { Html } from '@react-three/drei';
-
-const Gauge = ({ value, label, max, color }) => {
+function Gauge({ value, label, max, color, size, stroke, labelSize, valueSize }) {
   const percentage = (value / max) * 100;
-  const circumference = 2 * Math.PI * 35;
+  const radius = (size - stroke * 2) / 2;
+  const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '96px', height: '96px' }}>
-        <svg style={{ transform: 'rotate(-90deg)', width: '96px', height: '96px' }}>
-          {/* Background circle */}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ position: "relative", width: `${size}px`, height: `${size}px` }}>
+        <svg
+          style={{
+            transform: "rotate(-90deg)",
+            width: `${size}px`,
+            height: `${size}px`,
+          }}
+        >
           <circle
-            cx="48"
-            cy="48"
-            r="35"
-            stroke="#404040"
-            strokeWidth="6"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="rgba(148, 163, 184, 0.26)"
+            strokeWidth={stroke}
             fill="none"
           />
-          {/* Progress circle */}
           <circle
-            cx="48"
-            cy="48"
-            r="35"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
             stroke={color}
-            strokeWidth="6"
+            strokeWidth={stroke}
             fill="none"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            style={{ transition: 'stroke-dashoffset 1.5s ease-out' }}
+            style={{ transition: "stroke-dashoffset 1.5s ease-out" }}
           />
         </svg>
-        {/* Center value */}
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <span
             style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              color: '#ffffff',
-              textShadow: `0 0 10px ${color}`,
+              fontSize: `${valueSize}px`,
+              fontWeight: 600,
+              color: "#ffffff",
+              textShadow: `0 0 18px ${color}40`,
             }}
           >
             {value.toFixed(1)}
           </span>
         </div>
       </div>
-      {/* Label */}
       <span
         style={{
-          marginTop: '4px',
-          fontSize: '12px',
-          color: '#94a3b8',
-          textTransform: 'capitalize',
+          marginTop: "12px",
+          fontSize: `${labelSize}px`,
+          color: PANEL_SURFACE_COLORS.subdued,
+          textTransform: "capitalize",
         }}
       >
         {label}
       </span>
     </div>
   );
-};
+}
 
-const GaugeChart3D = ({ humidity = 0, temperature = 0, voltage = 0 }) => {
+export default function GaugeChart3D({
+  humidity = 0,
+  temperature = 0,
+  voltage = 0,
+  variant = "dashboard",
+}) {
+  const layout = getPanelContentLayout(variant);
+  const expanded = variant === "sliderFocus";
+
   return (
     <group>
       <Html
         transform
-        position={[0, 0.05, -0.04]}
-        scale={1}
+        position={[0, 0.05, 0.01]}
         distanceFactor={1.5}
         pointerEvents="none"
         zIndexRange={[50, 0]}
       >
-        <div
-          style={{
-            width: '360px',
-            height: '190px',
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95))',
-            border: '2px solid rgba(65, 105, 225, 0.3)',
-            borderRadius: '12px',
-            padding: '15px',
-            boxShadow: '0 0 40px rgba(34, 197, 94, 0.15)',
-            display: 'flex',
-            flexDirection: 'column',
-            color: 'white',
-            fontFamily: 'sans-serif',
-            cursor: 'pointer',
-          }}
-        >
-          {/* Title */}
-          <h2 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#94a3b8' }}>
-            Voltage Monitoring and Temperature
+        <div style={getPanelCardStyle(layout)}>
+          <h2
+            style={{
+              margin: `0 0 ${layout.titleSpacing}px 0`,
+              fontSize: `${layout.titleSize}px`,
+              color: PANEL_SURFACE_COLORS.title,
+              fontWeight: 500,
+            }}
+          >
+            Sensor gauges
           </h2>
 
-          {/* Gauges Container */}
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'space-around',
-              alignItems: 'center',
+              display: "flex",
+              justifyContent: "space-around",
+              alignItems: "center",
               flex: 1,
+              gap: `${layout.gap}px`,
             }}
           >
             <Gauge
               value={humidity}
               label="Humidity"
               max={100}
-              color="#22c55e"
+              color={PANEL_SURFACE_COLORS.humidity}
+              size={layout.gaugeSize}
+              stroke={layout.gaugeStroke}
+              labelSize={expanded ? 16 : 12}
+              valueSize={expanded ? 32 : 18}
             />
             <Gauge
               value={temperature}
               label="Temperature"
               max={50}
-              color="#f59e0b"
+              color={PANEL_SURFACE_COLORS.temperature}
+              size={layout.gaugeSize}
+              stroke={layout.gaugeStroke}
+              labelSize={expanded ? 16 : 12}
+              valueSize={expanded ? 32 : 18}
             />
             <Gauge
               value={voltage}
               label="Voltage"
               max={15}
-              color="#ef4444"
+              color={PANEL_SURFACE_COLORS.voltage}
+              size={layout.gaugeSize}
+              stroke={layout.gaugeStroke}
+              labelSize={expanded ? 16 : 12}
+              valueSize={expanded ? 32 : 18}
             />
           </div>
         </div>
       </Html>
     </group>
   );
-};
-
-export default GaugeChart3D;
+}

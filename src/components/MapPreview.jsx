@@ -1,17 +1,25 @@
 import { useMemo, useState } from "react";
 import { clampMapView, getStaticMapUrl, MAP_VIEW } from "../utils/mapConfig";
+import {
+  getPanelContentLayout,
+  PANEL_SURFACE_COLORS,
+} from "../utils/panelPresentation";
 
-export default function MapPreview() {
+export default function MapPreview({
+  variant = "dashboard",
+  showOpenButton = false,
+  onOpen,
+}) {
+  const layout = getPanelContentLayout(variant);
   const [view, setView] = useState(MAP_VIEW);
-
   const previewUrl = useMemo(
     () =>
       getStaticMapUrl({
-        width: 720,
-        height: 360,
+        width: Math.round(layout.width * 2),
+        height: Math.round(layout.mapHeight * 2),
         view,
       }),
-    [view]
+    [layout.mapHeight, layout.width, view]
   );
 
   const stopEvent = (event) => {
@@ -38,12 +46,12 @@ export default function MapPreview() {
   };
 
   const controlButtonStyle = {
-    width: "32px",
-    height: "32px",
+    width: `${layout.controlSize}px`,
+    height: `${layout.controlSize}px`,
     border: 0,
     background: "rgba(255, 255, 255, 0.96)",
     color: "#111827",
-    fontSize: "20px",
+    fontSize: `${layout.controlFontSize}px`,
     lineHeight: 1,
     cursor: "pointer",
     display: "flex",
@@ -60,7 +68,7 @@ export default function MapPreview() {
       style={{
         width: "100%",
         height: "100%",
-        borderRadius: "12px",
+        borderRadius: `${layout.radius}px`,
         overflow: "hidden",
         pointerEvents: "auto",
         position: "relative",
@@ -88,29 +96,29 @@ export default function MapPreview() {
             alignItems: "center",
             justifyContent: "center",
             color: "#cbd5e1",
-            fontSize: "13px",
+            fontSize: `${Math.max(13, layout.axisFont + 2)}px`,
             fontFamily: "sans-serif",
             textAlign: "center",
-            padding: "16px",
+            padding: `${layout.padding}px`,
           }}
         >
           Map preview unavailable. Add `VITE_MAPBOX_TOKEN` to load the location.
         </div>
       )}
 
-      {previewUrl && (
+      {previewUrl ? (
         <div
           onPointerDown={stopEvent}
           onClick={stopEvent}
           style={{
             position: "absolute",
-            right: "12px",
-            top: "12px",
+            right: `${layout.innerInset}px`,
+            top: `${layout.innerInset}px`,
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            borderRadius: "8px",
-            boxShadow: "0 8px 18px rgba(15, 23, 42, 0.32)",
+            borderRadius: `${Math.max(12, layout.radius * 0.5)}px`,
+            boxShadow: "0 12px 24px rgba(15, 23, 42, 0.32)",
             border: "1px solid rgba(148, 163, 184, 0.35)",
             background: "rgba(255, 255, 255, 0.92)",
           }}
@@ -128,7 +136,7 @@ export default function MapPreview() {
             onClick={resetBearing}
             style={{
               ...controlButtonStyle,
-              fontSize: "15px",
+              fontSize: `${Math.max(15, layout.controlFontSize - 4)}px`,
               transform: `rotate(${view.bearing}deg)`,
               transition: "transform 0.2s ease",
             }}
@@ -138,7 +146,51 @@ export default function MapPreview() {
             N
           </button>
         </div>
-      )}
+      ) : null}
+
+      {showOpenButton && typeof onOpen === "function" ? (
+        <button
+          type="button"
+          onPointerDown={stopEvent}
+          onClick={(event) => {
+            stopEvent(event);
+            onOpen();
+          }}
+          style={{
+            position: "absolute",
+            left: `${layout.innerInset}px`,
+            bottom: `${layout.innerInset}px`,
+            border: "1px solid rgba(255,255,255,0.18)",
+            borderRadius: "999px",
+            background: "rgba(15, 23, 42, 0.88)",
+            color: "#fff",
+            padding: layout.buttonPadding,
+            fontSize: `${Math.max(12, layout.axisFont + 1)}px`,
+            cursor: "pointer",
+            boxShadow: "0 8px 18px rgba(15, 23, 42, 0.32)",
+          }}
+        >
+          Open Map
+        </button>
+      ) : null}
+
+      <div
+        style={{
+          position: "absolute",
+          left: `${layout.innerInset}px`,
+          top: `${layout.innerInset}px`,
+          padding: "8px 12px",
+          borderRadius: "999px",
+          background: "rgba(8, 12, 18, 0.54)",
+          color: PANEL_SURFACE_COLORS.title,
+          fontSize: `${layout.subtitleSize}px`,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+        }}
+      >
+        Location tracing
+      </div>
     </div>
   );
 }

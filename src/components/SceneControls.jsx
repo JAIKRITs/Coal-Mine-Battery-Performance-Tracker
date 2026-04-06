@@ -15,7 +15,17 @@ const BACKGROUNDS = [
   },
 ];
 
-export default function SceneControls({ setEnvironmentFile }) {
+const actionButtonStyle = {
+  padding: "10px 14px",
+  borderRadius: "8px",
+  border: "1px solid rgba(255,255,255,0.18)",
+  background: "rgba(17,17,17,0.92)",
+  color: "#fff",
+  cursor: "pointer",
+  fontSize: "13px",
+};
+
+export default function SceneControls({ setEnvironmentFile, actions = [] }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(
     localStorage.getItem("selectedEnv") || BACKGROUNDS[0].file
@@ -34,28 +44,36 @@ export default function SceneControls({ setEnvironmentFile }) {
         right: 20,
         zIndex: 10000,
         fontFamily: "sans-serif",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
+        gap: "10px",
       }}
     >
-      {/* Toggle Button */}
+      {actions.map((action) => (
+        <button
+          key={action.label}
+          type="button"
+          onClick={action.onClick}
+          style={actionButtonStyle}
+        >
+          {action.label}
+        </button>
+      ))}
+
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((currentOpen) => !currentOpen)}
         style={{
-          padding: "10px 14px",
-          borderRadius: "8px",
+          ...actionButtonStyle,
           border: "none",
-          background: "#111",
-          color: "#fff",
-          cursor: "pointer",
         }}
       >
-        🎨 Background
+        Background
       </button>
 
-      {/* Dropdown Panel */}
       {open && (
         <div
           style={{
-            marginTop: "10px",
             background: "rgba(0,0,0,0.85)",
             padding: "10px",
             borderRadius: "10px",
@@ -63,7 +81,7 @@ export default function SceneControls({ setEnvironmentFile }) {
             boxShadow: "0 0 20px rgba(0,0,0,0.6)",
           }}
         >
-          {BACKGROUNDS.map((bg) => (
+          {BACKGROUNDS.map((bg, index) => (
             <div
               key={bg.file}
               onClick={() => {
@@ -72,7 +90,7 @@ export default function SceneControls({ setEnvironmentFile }) {
               }}
               style={{
                 padding: "8px",
-                marginBottom: "6px",
+                marginBottom: index === BACKGROUNDS.length - 1 ? 0 : "6px",
                 borderRadius: "6px",
                 cursor: "pointer",
                 background:

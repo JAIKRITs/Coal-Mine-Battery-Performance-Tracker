@@ -1,0 +1,257 @@
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 203, 145, 0.14), transparent 24%),
+    linear-gradient(180deg, #07090d 0%, #010203 100%);
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --portal-x: 50%;
+  --portal-y: 50%;
+  --enter-duration: 1300ms;
+}
+
+.scene-stage {
+  width: 100%;
+  height: 100%;
+  transform: scale(1.06);
+  opacity: 0.26;
+  filter: blur(18px) brightness(0.48) saturate(0.82);
+  transition:
+    transform var(--enter-duration) cubic-bezier(0.19, 1, 0.22, 1),
+    opacity 900ms ease,
+    filter var(--enter-duration) cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-shell--entering .scene-stage {
+  transform: scale(1);
+  opacity: 1;
+  filter: blur(0) brightness(1) saturate(1);
+}
+
+.intro-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: clamp(24px, 4vw, 56px);
+  border: 0;
+  color: #f8f4ee;
+  background:
+    radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(255, 238, 212, 0.16), transparent 12%),
+    radial-gradient(circle at 50% 50%, rgba(255, 181, 97, 0.06), transparent 40%),
+    linear-gradient(180deg, rgba(7, 9, 13, 0.84) 0%, rgba(1, 2, 3, 0.94) 100%);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: center;
+  isolation: isolate;
+  transition:
+    opacity 520ms ease,
+    transform 900ms cubic-bezier(0.19, 1, 0.22, 1),
+    background 220ms ease;
+}
+
+.intro-overlay--entering {
+  pointer-events: none;
+}
+
+.intro-grid,
+.intro-spotlight,
+.intro-aperture {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.intro-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 72px 72px;
+  opacity: 0.13;
+  mask-image: radial-gradient(circle at center, black 40%, transparent 78%);
+}
+
+.intro-spotlight {
+  inset: -10%;
+  background:
+    radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(255, 247, 230, 0.34), rgba(255, 206, 140, 0.08) 14%, transparent 28%);
+  mix-blend-mode: screen;
+  transition: transform 140ms ease-out;
+}
+
+.intro-aperture {
+  inset: auto;
+  left: var(--portal-x);
+  top: var(--portal-y);
+  width: 16rem;
+  height: 16rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 241, 222, 0.26);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 40px rgba(255, 205, 129, 0.18),
+    inset 0 0 30px rgba(255, 248, 237, 0.08);
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0.9;
+}
+
+.app-shell--entering .intro-aperture {
+  transform: translate(-50%, -50%) scale(12);
+  opacity: 0;
+  transition:
+    transform var(--enter-duration) cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 900ms ease;
+}
+
+.app-shell--entering .intro-overlay {
+  opacity: 0;
+  transform: scale(1.015);
+}
+
+.intro-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1rem;
+  width: min(960px, 100%);
+  justify-items: center;
+  transition:
+    opacity 420ms ease,
+    transform 700ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.app-shell--entering .intro-content {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+}
+
+.intro-kicker {
+  font-size: clamp(0.72rem, 1vw, 0.86rem);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(255, 236, 212, 0.72);
+}
+
+.intro-title {
+  max-width: 14ch;
+  font-size: clamp(2.2rem, 5vw, 4.8rem);
+  line-height: 0.96;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.intro-lines {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.8rem;
+}
+
+.intro-line {
+  font-size: clamp(0.8rem, 1.5vw, 1.05rem);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(242, 231, 214, 0.72);
+  animation: introLineDrift 7s ease-in-out infinite;
+  animation-delay: calc(var(--line-index) * 180ms);
+}
+
+.intro-instruction {
+  margin-top: 1rem;
+  font-size: clamp(0.86rem, 1.3vw, 1rem);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 214, 162, 0.88);
+}
+
+.intro-enter-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 10rem;
+  padding: 0.95rem 1.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 235, 205, 0.24);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: #fff4e7;
+}
+
+@keyframes introLineDrift {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateX(12px);
+    opacity: 0.92;
+  }
+}
+
+@media (max-width: 640px) {
+  .intro-lines {
+    gap: 0.55rem;
+  }
+
+  .intro-line {
+    letter-spacing: 0.22em;
+  }
+
+  .intro-kicker,
+  .intro-instruction,
+  .intro-enter-pill {
+    letter-spacing: 0.18em;
+  }
+
+  .intro-aperture {
+    width: 12rem;
+    height: 12rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-stage,
+  .intro-overlay,
+  .intro-content,
+  .intro-aperture,
+  .intro-spotlight {
+    transition: none !important;
+  }
+
+  .intro-line {
+    animation: none;
+  }
+
+  .scene-stage {
+    transform: none;
+    opacity: 0.45;
+    filter: blur(8px) brightness(0.62);
+  }
+
+  .app-shell--entering .scene-stage {
+    opacity: 1;
+    filter: none;
+  }
+}

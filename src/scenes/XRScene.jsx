@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { XR, VRButton, useXR } from "@react-three/xr";
+import { XR, useXR } from "@react-three/xr";
 import { OrbitControls, Environment } from "@react-three/drei";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
@@ -84,7 +84,7 @@ function CameraRig({
   return null;
 }
 
-export default function XRScene() {
+export default function XRScene({ actions = [] }) {
   const activePanelRef = useRef(null);
   const controlsRef = useRef(null);
   const experienceEyeRef = useRef(null);
@@ -136,7 +136,12 @@ export default function XRScene() {
         return;
       }
 
-      if ((event.key === "m" || event.key === "M") && !moveModeActive && !isExperiencePOV && !isReturningHome) {
+      if (
+        (event.key === "m" || event.key === "M") &&
+        !moveModeActive &&
+        !isExperiencePOV &&
+        !isReturningHome
+      ) {
         handleToggleMoveMode();
         return;
       }
@@ -210,8 +215,6 @@ export default function XRScene() {
 
   return (
     <>
-      {/* <VRButton /> */}
-
       <Canvas
         shadows
         camera={{ position: DEFAULT_CAMERA_POSITION.toArray(), fov: 55 }}
@@ -246,7 +249,7 @@ export default function XRScene() {
 
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -10, 0]}>
           <planeGeometry args={[50, 50]} />
-          <meshStandardMaterial color="#999999" />
+          <meshStandardMaterial color="#1a120d" roughness={0.94} metalness={0.08} />
         </mesh>
 
         <axesHelper args={[3]} />
@@ -292,7 +295,7 @@ export default function XRScene() {
         </XR>
       </Canvas>
 
-      <SceneControls setEnvironmentFile={setEnvironmentFile} />
+      <SceneControls setEnvironmentFile={setEnvironmentFile} actions={actions} />
 
       {moveModeActive && !isPresenting && (
         <button onClick={handleExitMoveMode} style={TOP_LEFT_EXIT_BUTTON_STYLE}>
@@ -301,10 +304,7 @@ export default function XRScene() {
       )}
 
       {isExperiencePOV && !isPresenting && (
-        <button
-          onClick={handleExitExperience}
-          style={TOP_LEFT_EXIT_BUTTON_STYLE}
-        >
+        <button onClick={handleExitExperience} style={TOP_LEFT_EXIT_BUTTON_STYLE}>
           Exit Experience
         </button>
       )}

@@ -11,6 +11,7 @@ import { useControlPanels } from "../hooks/useControlPanels.jsx";
 export default function ControlRoom({
   activePanelRef,
   onActivePanelChange,
+  onPanelHoverChange,
   experiencePOV = false,
   moveModeActive = false,
   moveSessionId = 0,
@@ -20,10 +21,11 @@ export default function ControlRoom({
   onPanelDragStateChange,
   experienceEyeRef,
   experienceLookTargetRef,
+  panelRefs: externalPanelRefs,
 }) {
   const [activePanel, setActivePanel] = useState(null);
 
-  const panelRefs = {
+  const fallbackPanelRefs = {
     tempHum: useRef(null),
     tempHumidityChart: useRef(null),
     humidity: useRef(null),
@@ -31,6 +33,7 @@ export default function ControlRoom({
     voltage: useRef(null),
     bottom: useRef(null),
   };
+  const panelRefs = externalPanelRefs ?? fallbackPanelRefs;
 
   const interactionsLocked = experiencePOV || moveModeActive;
   const visibleActivePanel = interactionsLocked ? null : activePanel;
@@ -48,6 +51,14 @@ export default function ControlRoom({
     }
 
     setActivePanel((currentPanel) => (currentPanel === key ? null : key));
+  };
+
+  const handlePanelHoverChange = (panelKey, isHovered) => {
+    if (!experiencePOV || moveModeActive || isPresenting) {
+      return;
+    }
+
+    onPanelHoverChange?.(isHovered ? panelKey : null);
   };
 
   useEffect(() => {
@@ -141,7 +152,13 @@ export default function ControlRoom({
           onTogglePanel={togglePanel}
           onDragStateChange={onPanelDragStateChange}
         >
-          <Panel3D title={panel.title} isActive={visibleActivePanel === panel.key}>
+          <Panel3D
+            title={panel.title}
+            isActive={visibleActivePanel === panel.key}
+            onHoverChange={(isHovered) =>
+              handlePanelHoverChange(panel.key, isHovered)
+            }
+          >
             {panel.content}
           </Panel3D>
         </MovablePanelGroup>

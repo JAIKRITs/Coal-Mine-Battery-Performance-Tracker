@@ -180,7 +180,7 @@ export default function TemperatureHumidityRelation3D({
               letterSpacing: "0.01em",
             }}
           >
-            Psychrometric chart
+            Temperature & Humidity Relation
           </h2>
 
           <div

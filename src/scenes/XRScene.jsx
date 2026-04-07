@@ -1,8 +1,11 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { XR, useXR } from "@react-three/xr";
 import { OrbitControls, Environment } from "@react-three/drei";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import ExperienceZoneSpatialAudio, {
+  EXPERIENCE_AUDIO_UNLOCK_EVENT,
+} from "../components/ExperienceZoneSpatialAudio.jsx";
 import MapOverlay from "../components/MapOverlay.jsx";
 
 import ControlRoom from "./ControlRoom";
@@ -89,9 +92,21 @@ export default function XRScene({ actions = [] }) {
   const controlsRef = useRef(null);
   const experienceEyeRef = useRef(null);
   const experienceLookTargetRef = useRef(null);
+  const panelRefs = useMemo(
+    () => ({
+      tempHum: { current: null },
+      tempHumidityChart: { current: null },
+      humidity: { current: null },
+      map: { current: null },
+      voltage: { current: null },
+      bottom: { current: null },
+    }),
+    []
+  );
 
   const [environmentFile, setEnvironmentFile] = useState("rogland_clear_night_4k.exr");
   const [activePanelKey, setActivePanelKey] = useState(null);
+  const [hoveredPanelKey, setHoveredPanelKey] = useState(null);
   const [cameraMode, setCameraMode] = useState("default");
   const [isPresenting, setIsPresenting] = useState(false);
   const [moveModeActive, setMoveModeActive] = useState(false);
@@ -103,6 +118,8 @@ export default function XRScene({ actions = [] }) {
   const isExperiencePOV = resolvedCameraMode === "experiencePOV";
   const isReturningHome = resolvedCameraMode === "returnHome";
   const orbitControlsLocked = isExperiencePOV || isReturningHome || isDraggingPanel;
+  const effectiveHoveredPanelKey =
+    isExperiencePOV && !isPresenting && !moveModeActive ? hoveredPanelKey : null;
 
   const handleToggleMoveMode = useCallback(() => {
     if (isPresenting || isExperiencePOV || isReturningHome) {
@@ -151,6 +168,7 @@ export default function XRScene({ actions = [] }) {
           return;
         }
 
+        window.dispatchEvent(new Event(EXPERIENCE_AUDIO_UNLOCK_EVENT));
         setCameraMode("experiencePOV");
         return;
       }
@@ -209,6 +227,7 @@ export default function XRScene({ actions = [] }) {
         return "returnHome";
       }
 
+      window.dispatchEvent(new Event(EXPERIENCE_AUDIO_UNLOCK_EVENT));
       return "experiencePOV";
     });
   };
@@ -279,9 +298,16 @@ export default function XRScene({ actions = [] }) {
             experienceLookTargetRef={experienceLookTargetRef}
           />
 
+          <ExperienceZoneSpatialAudio
+            enabled={isExperiencePOV && !isPresenting && !moveModeActive}
+            hoveredPanelKey={effectiveHoveredPanelKey}
+            panelRefs={panelRefs}
+          />
+
           <ControlRoom
             activePanelRef={activePanelRef}
             onActivePanelChange={setActivePanelKey}
+            onPanelHoverChange={setHoveredPanelKey}
             experiencePOV={isExperiencePOV}
             moveModeActive={moveModeActive}
             moveSessionId={moveSessionId}
@@ -291,6 +317,7 @@ export default function XRScene({ actions = [] }) {
             onPanelDragStateChange={setIsDraggingPanel}
             experienceEyeRef={experienceEyeRef}
             experienceLookTargetRef={experienceLookTargetRef}
+            panelRefs={panelRefs}
           />
         </XR>
       </Canvas>

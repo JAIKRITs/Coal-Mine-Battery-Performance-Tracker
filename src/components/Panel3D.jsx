@@ -8,6 +8,7 @@ export default function Panel3D({
   isActive,
   presentation = "dashboard",
   contentVisible = true,
+  onHoverChange,
 }) {
   const [hovered, setHovered] = useState(false);
   const layout = getPanelShellLayout(presentation);
@@ -22,6 +23,19 @@ export default function Panel3D({
     : showHover
     ? layout.hoverEmissiveIntensity
     : 0;
+  const handleHoverStart = (event) => {
+    event.stopPropagation();
+    if (layout.hoverTilt > 0) {
+      setHovered(true);
+    }
+    onHoverChange?.(true);
+  };
+
+  const handleHoverEnd = (event) => {
+    event.stopPropagation();
+    setHovered(false);
+    onHoverChange?.(false);
+  };
 
   return (
     <group
@@ -30,6 +44,8 @@ export default function Panel3D({
         showHover ? layout.hoverTilt : 0,
         0,
       ]}
+      onPointerOver={handleHoverStart}
+      onPointerOut={handleHoverEnd}
     >
       <mesh position={[0, 0, -layout.depth * 0.42]}>
         <boxGeometry args={[layout.width * 0.94, layout.height * 0.9, 0.01]} />
@@ -44,16 +60,6 @@ export default function Panel3D({
       <mesh
         castShadow
         receiveShadow
-        onPointerOver={(event) => {
-          event.stopPropagation();
-          if (layout.hoverTilt > 0) {
-            setHovered(true);
-          }
-        }}
-        onPointerOut={(event) => {
-          event.stopPropagation();
-          setHovered(false);
-        }}
       >
         <boxGeometry args={[layout.width, layout.height, layout.depth]} />
         <meshStandardMaterial

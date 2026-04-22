@@ -18,6 +18,7 @@ const actionButtonStyle = {
 export default function SceneControls({
   backgroundConfig = DEFAULT_BACKGROUND_CONFIG,
   setBackgroundConfig,
+  priorityAction = null,
   actions = [],
   footerActions = [],
 }) {
@@ -117,6 +118,8 @@ export default function SceneControls({
         gap: "10px",
       }}
     >
+      {priorityAction ? priorityAction : null}
+
       {actions.map((action) => (
         <button
           key={action.label}

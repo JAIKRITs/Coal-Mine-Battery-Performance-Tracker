@@ -6,9 +6,17 @@ import * as THREE from "three";
 import ExperienceZoneSpatialAudio, {
   EXPERIENCE_AUDIO_UNLOCK_EVENT,
 } from "../components/ExperienceZoneSpatialAudio.jsx";
+import AnalysisActionCard from "../components/AnalysisActionCard.jsx";
+import AnalysisDrawer from "../components/AnalysisDrawer.jsx";
 import GradientBackground from "../components/GradientBackground.jsx";
 import MapOverlay from "../components/MapOverlay.jsx";
+import { useAnalysisData } from "../hooks/useAnalysisData.js";
 import { useBackgroundConfig } from "../hooks/useBackgroundConfig.js";
+import {
+  ANALYSIS_REFRESH_INTERVAL_MS,
+  isAnalysisStale,
+} from "../utils/analysisPresentation.js";
+import "../styles/analysis-ui.css";
 
 import ControlRoom from "./ControlRoom";
 import SceneControls from "../components/SceneControls.jsx";
@@ -118,6 +126,16 @@ export default function XRScene({ actions = [], chartData }) {
   const [moveModeActive, setMoveModeActive] = useState(false);
   const [moveSessionId, setMoveSessionId] = useState(0);
   const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+  const [isAnalysisDrawerOpen, setIsAnalysisDrawerOpen] = useState(false);
+  const {
+    analysis,
+    isLoading: isAnalysisLoading,
+    isRefreshing: isAnalysisRefreshing,
+    error: analysisError,
+    hasAnalysis,
+    lastFetchedAt,
+    refreshAnalysis,
+  } = useAnalysisData(ANALYSIS_REFRESH_INTERVAL_MS);
 
   const resolvedCameraMode =
     cameraMode === "default" && activePanelKey ? "panelFocus" : cameraMode;
@@ -128,6 +146,18 @@ export default function XRScene({ actions = [], chartData }) {
     isExperiencePOV && !isPresenting && !moveModeActive ? hoveredPanelKey : null;
   const showGradientBackground = backgroundConfig.type === "gradient";
   const activeHdriFile = backgroundConfig.hdriFile;
+
+  const handleOpenAnalysis = useCallback(() => {
+    setIsAnalysisDrawerOpen(true);
+
+    if (!hasAnalysis || isAnalysisStale(lastFetchedAt, ANALYSIS_REFRESH_INTERVAL_MS)) {
+      refreshAnalysis({ background: hasAnalysis });
+    }
+  }, [hasAnalysis, lastFetchedAt, refreshAnalysis]);
+
+  const handleCloseAnalysis = useCallback(() => {
+    setIsAnalysisDrawerOpen(false);
+  }, []);
 
   const handleToggleMoveMode = useCallback(() => {
     if (isPresenting || isExperiencePOV || isReturningHome) {
@@ -158,6 +188,15 @@ export default function XRScene({ actions = [], chartData }) {
           target.isContentEditable);
 
       if (isTypingTarget || event.repeat) {
+        return;
+      }
+
+      if (isAnalysisDrawerOpen) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setIsAnalysisDrawerOpen(false);
+        }
+
         return;
       }
 
@@ -195,7 +234,14 @@ export default function XRScene({ actions = [], chartData }) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleToggleMoveMode, isExperiencePOV, isPresenting, isReturningHome, moveModeActive]);
+  }, [
+    handleToggleMoveMode,
+    isAnalysisDrawerOpen,
+    isExperiencePOV,
+    isPresenting,
+    isReturningHome,
+    moveModeActive,
+  ]);
 
   useEffect(() => {
     if (!isExperiencePOV) {
@@ -342,6 +388,17 @@ export default function XRScene({ actions = [], chartData }) {
       <SceneControls
         backgroundConfig={backgroundConfig}
         setBackgroundConfig={setBackgroundConfig}
+        priorityAction={
+          <AnalysisActionCard
+            analysis={analysis}
+            hasAnalysis={hasAnalysis}
+            isLoading={isAnalysisLoading}
+            isRefreshing={isAnalysisRefreshing}
+            error={analysisError}
+            lastFetchedAt={lastFetchedAt}
+            onOpen={handleOpenAnalysis}
+          />
+        }
         actions={actions}
         footerActions={[
           {
@@ -364,6 +421,18 @@ export default function XRScene({ actions = [], chartData }) {
       )}
 
       <MapOverlay />
+
+      <AnalysisDrawer
+        isOpen={isAnalysisDrawerOpen}
+        analysis={analysis}
+        hasAnalysis={hasAnalysis}
+        isLoading={isAnalysisLoading}
+        isRefreshing={isAnalysisRefreshing}
+        error={analysisError}
+        lastFetchedAt={lastFetchedAt}
+        onClose={handleCloseAnalysis}
+        onRefresh={() => refreshAnalysis({ background: hasAnalysis })}
+      />
     </>
   );
 }

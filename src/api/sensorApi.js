@@ -89,6 +89,135 @@ export async function fetchLatestSensorReading() {
   return normalizeSensorReading(payload);
 }
 
+function normalizeText(value) {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  return "";
+}
+
+function normalizeStringArray(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => normalizeText(entry))
+      .filter(Boolean);
+  }
+
+  const normalizedValue = normalizeText(value);
+  return normalizedValue ? [normalizedValue] : [];
+}
+
+function normalizeFlagValue(value) {
+  if (Array.isArray(value)) {
+    const normalizedArray = value
+      .map((entry) => normalizeFlagValue(entry))
+      .filter((entry) => {
+        if (typeof entry === "string") {
+          return Boolean(entry);
+        }
+
+        if (Array.isArray(entry)) {
+          return entry.length > 0;
+        }
+
+        return Boolean(entry) && Object.keys(entry).length > 0;
+      });
+
+    return normalizedArray.length > 0 ? normalizedArray : null;
+  }
+
+  if (value && typeof value === "object") {
+    const normalizedObject = Object.fromEntries(
+      Object.entries(value)
+        .map(([key, nestedValue]) => [key, normalizeFlagValue(nestedValue)])
+        .filter(([, nestedValue]) => {
+          if (typeof nestedValue === "string") {
+            return Boolean(nestedValue);
+          }
+
+          if (Array.isArray(nestedValue)) {
+            return nestedValue.length > 0;
+          }
+
+          return Boolean(nestedValue) && Object.keys(nestedValue).length > 0;
+        })
+    );
+
+    return Object.keys(normalizedObject).length > 0 ? normalizedObject : null;
+  }
+
+  const normalizedValue = normalizeText(value);
+  return normalizedValue || null;
+}
+
+function normalizeFlags(value) {
+  return normalizeFlagValue(value);
+}
+
+export function normalizeAnalysisPayload(payload) {
+  const latestPayload = Array.isArray(payload) ? payload[payload.length - 1] : payload;
+
+  if (!latestPayload || typeof latestPayload !== "object") {
+    return null;
+  }
+
+  const time = normalizeText(latestPayload.time || latestPayload.timestamp);
+  const parsedTimestamp = new Date(time).getTime();
+  const situation = normalizeText(latestPayload.situation);
+  const threatLevel = normalizeText(latestPayload.threat_level || latestPayload.threatLevel);
+  const alerts = normalizeStringArray(latestPayload.alerts);
+  const analysis = normalizeText(latestPayload.analysis);
+  const recommendedAction = normalizeText(
+    latestPayload.recommended_action || latestPayload.recommendedAction
+  );
+  const summary = normalizeText(latestPayload.summary);
+  const flags = normalizeFlags(latestPayload.flags);
+
+  const hasContent =
+    Boolean(time) ||
+    Boolean(situation) ||
+    Boolean(threatLevel) ||
+    alerts.length > 0 ||
+    Boolean(analysis) ||
+    Boolean(recommendedAction) ||
+    Boolean(summary) ||
+    Boolean(flags);
+
+  if (!hasContent) {
+    return null;
+  }
+
+  return {
+    time,
+    timestamp: time,
+    ts: Number.isFinite(parsedTimestamp) ? parsedTimestamp : null,
+    situation,
+    threatLevel,
+    alerts,
+    analysis,
+    recommendedAction,
+    summary,
+    flags,
+  };
+}
+
+export async function fetchLatestAnalysis() {
+  const response = await fetch(buildApiUrl("/analysis"));
+
+  if (!response.ok) {
+    throw new Error(`Failed to load environment analysis: ${response.status}`);
+  }
+
+  const payload = await response.json();
+
+  return normalizeAnalysisPayload(payload);
+}
+
 export function subscribeToSensorStream(onReading, onStatusChange) {
   const socket = io(SENSOR_API_BASE_URL, {
     transports: ["websocket", "polling"],

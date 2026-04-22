@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import HomeIntro from "./components/HomeIntro";
+import { useChartData } from "./hooks/useChartData";
 import XRScene from "./scenes/XRScene";
 import SliderScene from "./scenes/SliderScene";
 
@@ -21,6 +22,7 @@ function getRoute(pathname) {
 
 export default function App() {
   const [route, setRoute] = useState(() => getRoute(window.location.pathname));
+  const chartData = useChartData(3000);
 
   useEffect(() => {
     const normalizedRoute = getRoute(window.location.pathname);
@@ -49,12 +51,18 @@ export default function App() {
   }, []);
 
   if (route === "/slider") {
-    return <SliderScene onBackToDashboard={() => navigate("/dashboard")} />;
+    return (
+      <SliderScene
+        chartData={chartData}
+        onBackToDashboard={() => navigate("/dashboard")}
+      />
+    );
   }
 
   if (route === "/dashboard") {
     return (
       <XRScene
+        chartData={chartData}
         actions={[
           {
             label: "Open Slider",

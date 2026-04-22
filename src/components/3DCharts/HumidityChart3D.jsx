@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Html } from "@react-three/drei";
 import {
+  Area,
   CartesianGrid,
-  Line,
-  LineChart,
+  ComposedChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,6 +17,30 @@ import {
   getPanelTooltipStyle,
   PANEL_SURFACE_COLORS,
 } from "../../utils/panelPresentation";
+
+const MIN_VISIBLE_SPAN = 3;
+const MIN_PADDING = 0.4;
+
+function getHumidityDomain(values) {
+  if (values.length === 0) {
+    return [0, 100];
+  }
+
+  const observedMin = Math.min(...values);
+  const observedMax = Math.max(...values);
+  const observedRange = observedMax - observedMin;
+  const midpoint = (observedMin + observedMax) / 2;
+  const effectiveRange = Math.max(observedRange, MIN_VISIBLE_SPAN);
+  const padding = Math.max(effectiveRange * 0.18, MIN_PADDING);
+
+  const rawMin = midpoint - effectiveRange / 2 - padding;
+  const rawMax = midpoint + effectiveRange / 2 + padding;
+
+  return [
+    Math.max(0, Number(rawMin.toFixed(2))),
+    Math.min(100, Number(rawMax.toFixed(2))),
+  ];
+}
 
 export default function HumidityChart3D({
   humidity,
@@ -48,9 +73,11 @@ export default function HumidityChart3D({
     index: entry.index || 0,
     value: Number(entry.humidity) || 0,
   }));
-  const minValue = Math.min(...chartData.map((entry) => entry.value), 50);
-  const maxValue = Math.max(...chartData.map((entry) => entry.value), 80);
-  const padding = Math.max((maxValue - minValue) * 0.2, 1);
+  const humidityValues = chartData
+    .map((entry) => entry.value)
+    .filter((value) => Number.isFinite(value));
+  const [domainMin, domainMax] = getHumidityDomain(humidityValues);
+  const latestPoint = chartData[chartData.length - 1] ?? null;
 
   return (
     <group>
@@ -97,11 +124,12 @@ export default function HumidityChart3D({
               width: "100%",
               height: `${layout.chartHeight}px`,
               marginTop: `${layout.titleSpacing}px`,
+              padding: variant === "sliderFocus" ? "2px 0 0" : "0",
             }}
           >
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
+                <ComposedChart
                   data={chartData}
                   margin={{
                     top: 8,
@@ -111,24 +139,55 @@ export default function HumidityChart3D({
                   }}
                 >
                   <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={PANEL_SURFACE_COLORS.grid}
+                    strokeDasharray="4 6"
+                    stroke="rgba(148, 163, 184, 0.11)"
                   />
                   <XAxis hide dataKey="index" />
-                  <YAxis hide domain={[minValue - padding, maxValue + padding]} />
+                  <YAxis hide domain={[domainMin, domainMax]} />
+                  <ReferenceLine
+                    y={domainMin}
+                    stroke="rgba(255,255,255,0.08)"
+                    ifOverflow="extendDomain"
+                  />
                   <Tooltip
                     contentStyle={getPanelTooltipStyle(layout)}
                     formatter={(value) => [`${Number(value).toFixed(1)} %`, "Humidity"]}
                   />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="value"
                     stroke={PANEL_SURFACE_COLORS.humidity}
-                    strokeWidth={variant === "sliderFocus" ? 3.2 : 2.5}
-                    dot={false}
+                    strokeWidth={variant === "sliderFocus" ? 3.6 : 2.9}
+                    fill={PANEL_SURFACE_COLORS.humidity}
+                    fillOpacity={variant === "sliderFocus" ? 0.18 : 0.12}
+                    activeDot={{
+                      r: variant === "sliderFocus" ? 5.5 : 4,
+                      fill: PANEL_SURFACE_COLORS.humidity,
+                      stroke: "#eafff7",
+                      strokeWidth: 1.5,
+                    }}
+                    dot={(dotProps) => {
+                      const isLatestPoint =
+                        latestPoint && dotProps.index === chartData.length - 1;
+
+                      if (!isLatestPoint) {
+                        return null;
+                      }
+
+                      return (
+                        <circle
+                          cx={dotProps.cx}
+                          cy={dotProps.cy}
+                          r={variant === "sliderFocus" ? 5 : 3.6}
+                          fill={PANEL_SURFACE_COLORS.humidity}
+                          stroke="#ecfdf5"
+                          strokeWidth={1.5}
+                        />
+                      );
+                    }}
                     isAnimationActive={false}
                   />
-                </LineChart>
+                </ComposedChart>
               </ResponsiveContainer>
             ) : null}
           </div>

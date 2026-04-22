@@ -8,15 +8,14 @@ import TemperatureHumidityRelation3D from "../components/3DCharts/TemperatureHum
 import VoltageTemperatureChart3D from "../components/3DCharts/VoltageTemperatureChart3D.jsx";
 import { CONTROL_PANEL_DEFINITIONS } from "../utils/controlPanelDefinitions";
 import { getPanelContentLayout } from "../utils/panelPresentation";
-import { useChartData } from "./useChartData";
 
 export function useControlPanels({
+  chartData,
   mode = "dashboard",
   activePanelKey = null,
   interactionsEnabled = true,
   onRequestMapOpen,
 } = {}) {
-  const chartData = useChartData(3000);
   const contentVariant = mode === "slider" ? "sliderFocus" : "dashboard";
   const contentLayout = getPanelContentLayout(contentVariant);
 

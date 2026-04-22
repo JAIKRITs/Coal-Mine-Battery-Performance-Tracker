@@ -9,6 +9,7 @@ import MovablePanelGroup from "../components/MovablePanelGroup";
 import { useControlPanels } from "../hooks/useControlPanels.jsx";
 
 export default function ControlRoom({
+  chartData,
   activePanelRef,
   onActivePanelChange,
   onPanelHoverChange,
@@ -40,6 +41,7 @@ export default function ControlRoom({
   const moveGuideDisabled = isPresenting || experiencePOV;
   const moveGuideDisabledSubtitle = isPresenting ? "Desktop only" : "Exit POV first";
   const panels = useControlPanels({
+    chartData,
     mode: "dashboard",
     activePanelKey: visibleActivePanel,
     interactionsEnabled: !experiencePOV && !moveModeActive,

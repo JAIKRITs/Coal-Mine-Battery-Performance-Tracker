@@ -87,7 +87,7 @@ function CameraRig({
   return null;
 }
 
-export default function XRScene({ actions = [] }) {
+export default function XRScene({ actions = [] ,chartData}) {
   const activePanelRef = useRef(null);
   const controlsRef = useRef(null);
   const experienceEyeRef = useRef(null);
@@ -305,6 +305,7 @@ export default function XRScene({ actions = [] }) {
           />
 
           <ControlRoom
+            chartData={chartData}
             activePanelRef={activePanelRef}
             onActivePanelChange={setActivePanelKey}
             onPanelHoverChange={setHoveredPanelKey}
@@ -322,7 +323,16 @@ export default function XRScene({ actions = [] }) {
         </XR>
       </Canvas>
 
-      <SceneControls setEnvironmentFile={setEnvironmentFile} actions={actions} />
+      <SceneControls
+        setEnvironmentFile={setEnvironmentFile}
+        actions={actions}
+        footerActions={[
+          {
+            label: "Refresh",
+            onClick: () => chartData?.resetChartData?.(),
+          },
+        ]}
+      />
 
       {moveModeActive && !isPresenting && (
         <button onClick={handleExitMoveMode} style={TOP_LEFT_EXIT_BUTTON_STYLE}>

@@ -6,10 +6,11 @@ import PanelSliderReel from "../components/PanelSliderReel.jsx";
 import SceneControls from "../components/SceneControls.jsx";
 import { useControlPanels } from "../hooks/useControlPanels.jsx";
 
-export default function SliderScene({ onBackToDashboard }) {
+export default function SliderScene({ chartData, onBackToDashboard }) {
   const [environmentFile, setEnvironmentFile] = useState("rogland_clear_night_4k.exr");
   const [activePanelKey, setActivePanelKey] = useState("tempHum");
   const panels = useControlPanels({
+    chartData,
     mode: "slider",
     activePanelKey,
     interactionsEnabled: true,

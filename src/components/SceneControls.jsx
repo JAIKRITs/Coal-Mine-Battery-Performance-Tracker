@@ -25,7 +25,11 @@ const actionButtonStyle = {
   fontSize: "13px",
 };
 
-export default function SceneControls({ setEnvironmentFile, actions = [] }) {
+export default function SceneControls({
+  setEnvironmentFile,
+  actions = [],
+  footerActions = [],
+}) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(
     localStorage.getItem("selectedEnv") || BACKGROUNDS[0].file
@@ -106,6 +110,17 @@ export default function SceneControls({ setEnvironmentFile, actions = [] }) {
           ))}
         </div>
       )}
+
+      {footerActions.map((action) => (
+        <button
+          key={action.label}
+          type="button"
+          onClick={action.onClick}
+          style={actionButtonStyle}
+        >
+          {action.label}
+        </button>
+      ))}
     </div>
   );
 }
